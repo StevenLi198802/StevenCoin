@@ -17,7 +17,7 @@ class Block{
     mineBlock(difficulty){
         while(this.hash.substring(0, difficulty) !== Array(difficulty + 1).join("0")){
             this.nonce++;
-            this.hash == this.calculateHash();
+            this.hash = this.calculateHash();
         }
 
         console.log("Block mined: " + this.hash);
@@ -27,7 +27,7 @@ class Block{
 class BlockChain{
     constructor(){
         this.chain = [this.createGenesisBlock()];
-        this.difficulty = 1;
+        this.difficulty = 4;
     }
 
     createGenesisBlock(){
@@ -67,5 +67,5 @@ let stevenCoin = new BlockChain();
 console.log("Mine block 1...");
 stevenCoin.addBlock(new Block(1, "01/03/2019", { amount:1 }));
 
-console.log("Mine block 2...")
+console.log("Mine block 2...");
 stevenCoin.addBlock(new Block(2, "01/04/2019", { amount:2 }));
