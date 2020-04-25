@@ -1,117 +1,22 @@
-const SHA256 = require('crypto-js/sha256');
+const {BlockChain, Transaction} = require('./blockchain');
+const EC = require('elliptic').ec;
+const ec = new EC('secp256k1');
 
-class Transaction{
-    constructor(fromAddress, toAddress, amount){
-        this.fromAddress = fromAddress;
-        this.toAddress = toAddress;
-        this.amount = amount;
-    }
-}
-
-class Block{
-    constructor(timestamp, transactions, previousHash = ''){
-        this.timestamp = timestamp;
-        this.transactions = transactions;
-        this.previousHash = previousHash;
-        this.hash = this.calculateHash();
-        this.nonce = 0;
-    }
-
-    calculateHash(){
-        return SHA256(this.index + this.previousHash + this.timestamp + JSON.stringify(this.data) + this.nonce).toString();
-    }
-
-    mineBlock(difficulty){
-        while(this.hash.substring(0, difficulty) !== Array(difficulty + 1).join("0")){
-            this.nonce++;
-            this.hash = this.calculateHash();
-        }
-
-        console.log("Block mined: " + this.hash);
-    }
-}
-
-class BlockChain{
-    constructor(){
-        this.chain = [this.createGenesisBlock()];
-        this.difficulty = 2;
-        this.pendingTransactions = [];
-        this.miningReward = 100;
-    }
-
-    createGenesisBlock(){
-        return new Block("01/02/2019", "This is the genesis block", 0);
-    }
-
-    getLatestBlock(){
-        return this.chain[this.chain.length - 1];
-    }
-
-    minePendingTransactions(miningRewardAddress){
-        let block = new Block(Date.now(), this.pendingTransactions);
-        block.mineBlock(this.difficulty);
-
-        console.log('Block successfully mined!');
-        this.chain.push(block);
-
-        this.pendingTransactions = [
-            new Transaction(null, miningRewardAddress, this.miningReward)
-        ];  
-    }
-
-    createTransaction(transaction){
-        this.pendingTransactions.push(transaction);
-    }
-
-    getBlanceOfAddress(address){
-        let balance = 0;
-
-        for(const block of this.chain){
-            for(const trans of block.transactions){
-                if(trans.fromAddress === address){
-                    balance -= trans.amount;
-                }
-
-                if(trans.toAddress === address){
-                    balance += trans.amount;
-                }
-            }
-        }
-
-        return balance;
-    }
-
-    isChainValid(){
-        for(let i = 1; i < this.chain.length; i++){
-            const currentBlock = this.chain[i];
-            const previousBlock = this.chain[i - 1];
-
-            if(currentBlock.hash != currentBlock.calculateHash()){
-                return false;
-            }
-
-            if(currentBlock.previousHash != previousBlock.hash){
-                return false;
-            }
-
-            return false;
-        }
-    }
-}
+const myKey = ec.keyFromPrivate('386fa45f85e14c5773db7ac64cab5a1664d05fa1a6c1691e1a2ff8bc1489ddf4');
+const myWalletAddress = myKey.getPublic('hex');
 
 let stevenCoin = new BlockChain();
 
-stevenCoin.createTransaction(new Transaction("address1", "address2", 100));
-stevenCoin.createTransaction(new Transaction("address2", "address1", 30));
+const tx1 = new Transaction(myWalletAddress, 'miner_address', 10);
+tx1.signTransaction(myKey);
+stevenCoin.addTransaction(tx1);
 
 console.log("\n Starting to mine...");
-stevenCoin.minePendingTransactions("miner_address");
+stevenCoin.minePendingTransactions(myWalletAddress);
 
 console.log("\n Balance of miner is ", stevenCoin.getBlanceOfAddress("miner_address"));
+console.log("\n Balance of myWalletAddress is ", stevenCoin.getBlanceOfAddress(myWalletAddress));
 
-console.log("\n Starting to mine once more...");
-stevenCoin.minePendingTransactions("miner_address");
+stevenCoin.chain[1].transactions[0].amount = 2;
 
-console.log("\n Balance of miner is ", stevenCoin.getBlanceOfAddress("miner_address"));
-console.log("\n Balance of addres1 is ", stevenCoin.getBlanceOfAddress("address1"));
-console.log("\n Balance of addres2 is ", stevenCoin.getBlanceOfAddress("address2"));
+console.log('Is the chain valid?', stevenCoin.isChainValid());
