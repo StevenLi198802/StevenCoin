@@ -7,6 +7,7 @@ class Transaction{
         this.fromAddress = fromAddress;
         this.toAddress = toAddress;
         this.amount = amount;
+        this.timestamp = Date.now();
     }
 
     calculateHash(){
@@ -79,7 +80,7 @@ class BlockChain{
     }
 
     createGenesisBlock(){
-        return new Block("01/02/2019", "This is the genesis block", 0);
+        return new Block(Date.parse('2018-03-01'), [], 0);
     }
 
     getLatestBlock(){
